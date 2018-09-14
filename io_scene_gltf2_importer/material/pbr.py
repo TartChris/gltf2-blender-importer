@@ -111,7 +111,8 @@ class Pbr():
         output_node = node_tree.nodes[0]
         output_node.location = 1000,0
 
-        blendfile = "D:\Projects\gltf2-blender-importer\io_scene_gltf2_importer\\glTF2_Principled.blend"
+        # blendfile = "D:\Projects\gltf2-blender-importer\io_scene_gltf2_importer\\glTF2_Principled.blend"
+        blendfile = os.path.dirname(__file__) + "\\glTF2_Principled.blend"
         section = "\\NodeTree\\"
         object = "glTF Metallic Roughness"
 
