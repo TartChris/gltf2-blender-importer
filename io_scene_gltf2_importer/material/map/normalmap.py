@@ -51,6 +51,9 @@ class NormalMap(Map):
             diffuse = [node for node in node_tree.nodes if node.type == "BSDF_DIFFUSE"][0]
             glossy  = [node for node in node_tree.nodes if node.type == "BSDF_GLOSSY"][0]
 
+        if len([node for node in node_tree.nodes if node.bl_idname == 'ShaderNodeGroup']) != 0:
+            GLTF = [node for node in node_tree.nodes if node.bl_idname == 'ShaderNodeGroup'][0]
+
         # add nodes
         mapping = node_tree.nodes.new('ShaderNodeMapping')
         mapping.location = -1000,-500
@@ -75,6 +78,8 @@ class NormalMap(Map):
         # following  links will modify PBR node tree
         if principled:
             node_tree.links.new(principled.inputs[17], normalmap_node.outputs[0])
+        if GLTF:
+            node_tree.links.new(GLTF.inputs['Normal'], text.outputs[0])
         if diffuse:
             node_tree.links.new(diffuse.inputs[2], normalmap_node.outputs[0])
         if glossy:

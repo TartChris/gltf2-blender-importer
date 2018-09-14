@@ -111,9 +111,27 @@ class Pbr():
         output_node = node_tree.nodes[0]
         output_node.location = 1000,0
 
+        blendfile = "D:\Projects\gltf2-blender-importer\io_scene_gltf2_importer\\glTF2_Principled.blend"
+        section = "\\NodeTree\\"
+        object = "glTF Metallic Roughness"
+
+        filepath = blendfile + section + object
+        directory = blendfile + section
+        filename = object
+
+        bpy.ops.wm.link(
+            filepath=filepath,
+            filename=filename,
+            directory=directory)
+
+        gltf_metallic_roughness = node_tree.nodes.new("ShaderNodeGroup")
+        gltf_metallic_roughness.node_tree = bpy.data.node_groups['glTF Metallic Roughness']
+        gltf_metallic_roughness.location = 0, 0
+        # principled = group
+
         # create PBR node
         principled = node_tree.nodes.new('ShaderNodeBsdfPrincipled')
-        principled.location = 0,0
+        principled.location = 200, 0
 
         if self.color_type == self.SIMPLE:
 
@@ -124,6 +142,10 @@ class Pbr():
                 principled.inputs[5].default_value = self.metallicFactor #TODO : currently set metallic & specular in same way
                 principled.inputs[7].default_value = self.roughnessFactor
 
+                gltf_metallic_roughness.inputs['BaseColorFactor'].default_value = self.baseColorFactor
+                gltf_metallic_roughness.inputs['MetallicFactor'].default_value = self.metallicFactor
+                gltf_metallic_roughness.inputs['RoughnessFactor'].default_value = self.roughnessFactor
+
             else:
                 # Create attribute node to get COLOR_0 data
                 attribute_node = node_tree.nodes.new('ShaderNodeAttribute')
@@ -133,8 +155,12 @@ class Pbr():
                 principled.inputs[5].default_value = self.metallicFactor #TODO : currently set metallic & specular in same way
                 principled.inputs[7].default_value = self.roughnessFactor
 
+                gltf_metallic_roughness.inputs['MetallicFactor'].default_value = self.metallicFactor
+                gltf_metallic_roughness.inputs['RoughnessFactor'].default_value = self.roughnessFactor
+
                 # links
                 node_tree.links.new(principled.inputs[0], attribute_node.outputs[1])
+                node_tree.links.new(gltf_metallic_roughness.inputs['BaseColor'], attribute_node.outputs[1])
 
         elif self.color_type == self.TEXTURE_FACTOR:
 
@@ -162,64 +188,65 @@ class Pbr():
             text_node.image = bpy.data.images[self.baseColorTexture.image.blender_image_name]
             text_node.location = -1000,500
 
-            combine = node_tree.nodes.new('ShaderNodeCombineRGB')
-            combine.location = -250,500
+            # combine = node_tree.nodes.new('ShaderNodeCombineRGB')
+            # combine.location = -250,500
+            #
+            # math_R  = node_tree.nodes.new('ShaderNodeMath')
+            # math_R.location = -500, 750
+            # math_R.operation = 'MULTIPLY'
+            # math_R.inputs[1].default_value = self.baseColorFactor[0]
+            #
+            # math_G  = node_tree.nodes.new('ShaderNodeMath')
+            # math_G.location = -500, 500
+            # math_G.operation = 'MULTIPLY'
+            # math_G.inputs[1].default_value = self.baseColorFactor[1]
+            #
+            # math_B  = node_tree.nodes.new('ShaderNodeMath')
+            # math_B.location = -500, 250
+            # math_B.operation = 'MULTIPLY'
+            # math_B.inputs[1].default_value = self.baseColorFactor[2]
+            #
+            # separate = node_tree.nodes.new('ShaderNodeSeparateRGB')
+            # separate.location = -750, 500
 
-            math_R  = node_tree.nodes.new('ShaderNodeMath')
-            math_R.location = -500, 750
-            math_R.operation = 'MULTIPLY'
-            math_R.inputs[1].default_value = self.baseColorFactor[0]
-
-            math_G  = node_tree.nodes.new('ShaderNodeMath')
-            math_G.location = -500, 500
-            math_G.operation = 'MULTIPLY'
-            math_G.inputs[1].default_value = self.baseColorFactor[1]
-
-            math_B  = node_tree.nodes.new('ShaderNodeMath')
-            math_B.location = -500, 250
-            math_B.operation = 'MULTIPLY'
-            math_B.inputs[1].default_value = self.baseColorFactor[2]
-
-            separate = node_tree.nodes.new('ShaderNodeSeparateRGB')
-            separate.location = -750, 500
-
-            mapping = node_tree.nodes.new('ShaderNodeMapping')
-            mapping.location = -1500, 500
-
-            uvmap = node_tree.nodes.new('ShaderNodeUVMap')
-            uvmap.location = -2000, 500
-            uvmap["gltf2_texcoord"] = self.baseColorTexture.texcoord # Set custom flag to retrieve TexCoord
+            # mapping = node_tree.nodes.new('ShaderNodeMapping')
+            # mapping.location = -1500, 500
+            #
+            # uvmap = node_tree.nodes.new('ShaderNodeUVMap')
+            # uvmap.location = -2000, 500
+            # uvmap["gltf2_texcoord"] = self.baseColorTexture.texcoord # Set custom flag to retrieve TexCoord
             # UV Map will be set after object/UVMap creation
 
             # Create links
-            if self.vertex_color:
-                node_tree.links.new(separate_vertex_color.inputs[0], attribute_node.outputs[0])
-                node_tree.links.new(math_vc_R.inputs[1], separate_vertex_color.outputs[0])
-                node_tree.links.new(math_vc_G.inputs[1], separate_vertex_color.outputs[1])
-                node_tree.links.new(math_vc_B.inputs[1], separate_vertex_color.outputs[2])
-                node_tree.links.new(math_vc_R.inputs[0], math_R.outputs[0])
-                node_tree.links.new(math_vc_G.inputs[0], math_G.outputs[0])
-                node_tree.links.new(math_vc_B.inputs[0], math_B.outputs[0])
-                node_tree.links.new(combine.inputs[0], math_vc_R.outputs[0])
-                node_tree.links.new(combine.inputs[1], math_vc_G.outputs[0])
-                node_tree.links.new(combine.inputs[2], math_vc_B.outputs[0])
+            # if self.vertex_color:
+            #     node_tree.links.new(separate_vertex_color.inputs[0], attribute_node.outputs[0])
+            #     node_tree.links.new(math_vc_R.inputs[1], separate_vertex_color.outputs[0])
+            #     node_tree.links.new(math_vc_G.inputs[1], separate_vertex_color.outputs[1])
+            #     node_tree.links.new(math_vc_B.inputs[1], separate_vertex_color.outputs[2])
+            #     node_tree.links.new(math_vc_R.inputs[0], math_R.outputs[0])
+            #     node_tree.links.new(math_vc_G.inputs[0], math_G.outputs[0])
+            #     node_tree.links.new(math_vc_B.inputs[0], math_B.outputs[0])
+            #     node_tree.links.new(combine.inputs[0], math_vc_R.outputs[0])
+            #     node_tree.links.new(combine.inputs[1], math_vc_G.outputs[0])
+            #     node_tree.links.new(combine.inputs[2], math_vc_B.outputs[0])
+            #
+            # else:
+            #     node_tree.links.new(combine.inputs[0], math_R.outputs[0])
+            #     node_tree.links.new(combine.inputs[1], math_G.outputs[0])
+            #     node_tree.links.new(combine.inputs[2], math_B.outputs[0])
+            #
+            # # Common for both mode (non vertex color / vertex color)
+            # node_tree.links.new(math_R.inputs[0], separate.outputs[0])
+            # node_tree.links.new(math_G.inputs[0], separate.outputs[1])
+            # node_tree.links.new(math_B.inputs[0], separate.outputs[2])
 
-            else:
-                node_tree.links.new(combine.inputs[0], math_R.outputs[0])
-                node_tree.links.new(combine.inputs[1], math_G.outputs[0])
-                node_tree.links.new(combine.inputs[2], math_B.outputs[0])
-
-            # Common for both mode (non vertex color / vertex color)
-            node_tree.links.new(math_R.inputs[0], separate.outputs[0])
-            node_tree.links.new(math_G.inputs[0], separate.outputs[1])
-            node_tree.links.new(math_B.inputs[0], separate.outputs[2])
-
-            node_tree.links.new(mapping.inputs[0], uvmap.outputs[0])
-            node_tree.links.new(text_node.inputs[0], mapping.outputs[0])
-            node_tree.links.new(separate.inputs[0], text_node.outputs[0])
+            # node_tree.links.new(mapping.inputs[0], uvmap.outputs[0])
+            # node_tree.links.new(text_node.inputs[0], mapping.outputs[0])
+            # node_tree.links.new(separate.inputs[0], text_node.outputs[0])
 
 
-            node_tree.links.new(principled.inputs[0], combine.outputs[0])
+            node_tree.links.new(principled.inputs[0], text_node.outputs[0])
+            node_tree.links.new(gltf_metallic_roughness.inputs['BaseColor'], text_node.outputs[0])
 
         elif self.color_type == self.TEXTURE:
 
@@ -298,6 +325,7 @@ class Pbr():
 
             else:
                 node_tree.links.new(principled.inputs[0], text_node.outputs[0])
+                node_tree.links.new(gltf_metallic_roughness.inputs['BaseColor'], text_node.outputs[0])
 
             # Common for both mode (non vertex color / vertex color)
 
@@ -310,6 +338,9 @@ class Pbr():
             principled.inputs[4].default_value = self.metallicFactor
             principled.inputs[7].default_value = self.roughnessFactor
 
+            gltf_metallic_roughness.inputs['MetallicFactor'].default_value = self.metallicFactor
+            gltf_metallic_roughness.inputs['RoughnessFactor'].default_value = self.roughnessFactor
+
         elif self.metallic_type == self.TEXTURE:
             self.metallicRoughnessTexture.blender_create()
             metallic_text = node_tree.nodes.new('ShaderNodeTexImage')
@@ -317,23 +348,29 @@ class Pbr():
             metallic_text.color_space = 'NONE'
             metallic_text.location = -500,0
 
-            metallic_separate = node_tree.nodes.new('ShaderNodeSeparateRGB')
-            metallic_separate.location = -250,0
-
-            metallic_mapping = node_tree.nodes.new('ShaderNodeMapping')
-            metallic_mapping.location = -1000,0
-
-            metallic_uvmap = node_tree.nodes.new('ShaderNodeUVMap')
-            metallic_uvmap.location = -1500,0
-            metallic_uvmap["gltf2_texcoord"] = self.metallicRoughnessTexture.texcoord # Set custom flag to retrieve TexCoord
+            # metallic_separate = node_tree.nodes.new('ShaderNodeSeparateRGB')
+            # metallic_separate.location = -250,0
+            #
+            # metallic_mapping = node_tree.nodes.new('ShaderNodeMapping')
+            # metallic_mapping.location = -1000,0
+            #
+            # metallic_uvmap = node_tree.nodes.new('ShaderNodeUVMap')
+            # metallic_uvmap.location = -1500,0
+            # metallic_uvmap["gltf2_texcoord"] = self.metallicRoughnessTexture.texcoord # Set custom flag to retrieve TexCoord
 
             # links
-            node_tree.links.new(metallic_separate.inputs[0], metallic_text.outputs[0])
-            node_tree.links.new(principled.inputs[4], metallic_separate.outputs[2]) # metallic
-            node_tree.links.new(principled.inputs[7], metallic_separate.outputs[1]) # Roughness
+            # node_tree.links.new(metallic_separate.inputs[0], metallic_text.outputs[0])
+            # node_tree.links.new(principled.inputs[4], metallic_separate.outputs[2]) # metallic
+            # node_tree.links.new(principled.inputs[7], metallic_separate.outputs[1]) # Roughness
+            # node_tree.links.new(gltf_metallic_roughness.inputs['MetallicRoughness'], metallic_separate.outputs[2])  # metallic
+            # node_tree.links.new(gltf_metallic_roughness.inputs['MetallicRoughness'], metallic_separate.outputs[1])  # Roughness
+            node_tree.links.new(gltf_metallic_roughness.inputs['MetallicRoughness'],
+                                metallic_text.outputs[0])  # Roughness
+            node_tree.links.new(gltf_metallic_roughness.inputs['Occlusion'],
+                                metallic_text.outputs[0])  # Roughness
 
-            node_tree.links.new(metallic_mapping.inputs[0], metallic_uvmap.outputs[0])
-            node_tree.links.new(metallic_text.inputs[0], metallic_mapping.outputs[0])
+            # node_tree.links.new(metallic_mapping.inputs[0], metallic_uvmap.outputs[0])
+            # node_tree.links.new(metallic_text.inputs[0], metallic_mapping.outputs[0])
 
         elif self.metallic_type == self.TEXTURE_FACTOR:
 
@@ -375,12 +412,15 @@ class Pbr():
             # roughness
             node_tree.links.new(roughness_math.inputs[0], metallic_separate.outputs[1])
             node_tree.links.new(principled.inputs[7], roughness_math.outputs[0])
+            node_tree.links.new(gltf_metallic_roughness.inputs['Normal'], roughness_math.outputs[0])
 
             node_tree.links.new(metallic_mapping.inputs[0], metallic_uvmap.outputs[0])
             node_tree.links.new(metallic_text.inputs[0], metallic_mapping.outputs[0])
 
+
         # link node to output
-        node_tree.links.new(output_node.inputs[0], principled.outputs[0])
+        # node_tree.links.new(output_node.inputs[0], principled.outputs[0])
+        node_tree.links.new(output_node.inputs[0], gltf_metallic_roughness.outputs[0])
 
     def debug_missing(self):
         if self.json is None:

@@ -26,6 +26,7 @@ import os
 import base64
 import tempfile
 from os.path import dirname, join, isfile, basename
+from pathlib import Path
 from ..buffer import *
 
 class Image():
@@ -52,7 +53,7 @@ class Image():
             if isfile(join(dirname(self.gltf.filename), self.json['uri'])):
                 with open(join(dirname(self.gltf.filename), self.json['uri']), 'rb') as f_:
                     self.data = f_.read()
-                    self.image_name = basename(join(dirname(self.gltf.filename), self.json['uri']))
+                    self.image_name = str(Path(basename(join(dirname(self.gltf.filename), self.json['uri']))).with_suffix(''));
                     return
             else:
                 self.gltf.log.error("Missing file (index " + str(self.index) + "): " + self.json['uri'])
