@@ -112,12 +112,12 @@ class Pbr():
         output_node.location = 1000,0
 
         # blendfile = "D:\Projects\gltf2-blender-importer\io_scene_gltf2_importer\\glTF2_Principled.blend"
-        blendfile = os.path.dirname(__file__) + "\\glTF2_Principled.blend"
-        section = "\\NodeTree\\"
+        blendfile = os.path.join(os.path.dirname(__file__),  "glTF2_Principled.blend")
+        section = "NodeTree"
         object = "glTF Metallic Roughness"
 
-        filepath = blendfile + section + object
-        directory = blendfile + section
+        filepath = os.path.join(blendfile, section, object)
+        directory = os.path.join(blendfile, section)
         filename = object
 
         bpy.ops.wm.link(
